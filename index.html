@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SmartPark — Sistema de Monitoramento</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="brand"><span class="logo-dot"></span>SmartPark</div>
+      <div class="sub">Sistema de Monitoramento</div>
+    </div>
+    <div class="nav-item active" data-page="dashboard"><span class="nav-icon">⊞</span>Dashboard</div>
+    <div class="nav-item" data-page="relatorios"><span class="nav-icon">↗</span>Relatórios</div>
+    <div class="sidebar-footer">
+      <span class="status-dot"></span>Sistema Online<br>
+      <span id="last-update" style="font-family:var(--mono);font-size:10px;"></span>
+    </div>
+  </nav>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <span class="topbar-title" id="topbar-title">DASHBOARD</span>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="live-badge"><span class="logo-dot" style="width:6px;height:6px;margin:0;"></span>AO VIVO</div>
+      <span class="topbar-time" id="clock">--:--:--</span>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ===== PAGE: DASHBOARD ===== -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon green">🟢</div>
+          <div>
+            <div class="stat-num green" id="s-free">--</div>
+            <div class="stat-lbl">Vagas Livres</div>
+            <div class="stat-pct" id="s-free-pct">-- % do total</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red">🔴</div>
+          <div>
+            <div class="stat-num red" id="s-occ">--</div>
+            <div class="stat-lbl">Vagas Ocupadas</div>
+            <div class="stat-pct" id="s-occ-pct">-- % do total</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon amber">🅿</div>
+          <div>
+            <div class="stat-num" id="s-total" style="color:var(--amber)">21</div>
+            <div class="stat-lbl">Total de Vagas</div>
+            <div class="stat-pct">capacidade máxima</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon gray">⏱</div>
+          <div>
+            <div class="stat-num" id="s-avg" style="color:var(--text)">--m</div>
+            <div class="stat-lbl">Tempo Médio</div>
+            <div class="stat-pct">última hora</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-area">
+        <div class="parking-card">
+          <div class="card-header">
+            <span class="card-title">Visualização do Estacionamento</span>
+            <span class="card-sub" id="map-updated">Atualizado agora</span>
+          </div>
+          <div class="parking-grid" id="parking-grid"></div>
+          <div class="legend">
+            <div class="leg-item"><div class="leg-dot free"></div>Livre</div>
+            <div class="leg-item"><div class="leg-dot occ"></div>Ocupada</div>
+            <div class="leg-item"><div class="leg-dot una"></div>Indisponível</div>
+          </div>
+        </div>
+        <div class="status-card">
+          <div class="card-header">
+            <span class="card-title">Status das Vagas</span>
+          </div>
+          <div class="status-list" id="status-list"></div>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="tab-row"><div class="tab active">Ocupação por hora</div></div>
+          <div class="card-header" style="border-top:1px solid var(--border);">
+            <span class="card-sub">Últimas 24h</span>
+            <div style="display:flex;gap:12px;font-size:11px;">
+              <span style="display:flex;align-items:center;gap:4px;color:var(--muted)"><span style="width:10px;height:2px;background:var(--green);display:inline-block;border-radius:2px;"></span>Livres</span>
+              <span style="display:flex;align-items:center;gap:4px;color:var(--muted)"><span style="width:10px;height:2px;background:var(--red);display:inline-block;border-radius:2px;border-top:2px dashed var(--red);height:0;"></span>Ocupadas</span>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-hour" role="img" aria-label="Ocupação por hora nas últimas 24h">Gráfico de ocupação por hora.</canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="tab-row"><div class="tab active">Distribuição atual</div></div>
+          <div class="card-header" style="border-top:1px solid var(--border);">
+            <span class="card-sub">Percentual de uso</span>
+            <div id="donut-legend" style="display:flex;gap:12px;font-size:11px;"></div>
+          </div>
+          <div class="chart-wrap" style="height:160px;display:flex;align-items:center;justify-content:center;">
+            <div style="position:relative;width:160px;height:160px;">
+              <canvas id="chart-donut" width="160" height="160" role="img" aria-label="Distribuição atual de vagas livres e ocupadas">Distribuição de vagas.</canvas>
+              <div id="donut-center" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
+                <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text);" id="donut-pct">--%</div>
+                <div style="font-size:10px;color:var(--muted);">livre</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PAGE: RELATÓRIOS ===== -->
+    <div class="page" id="page-relatorios">
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon amber" style="font-size:20px;">🚗</div>
+          <div>
+            <div class="stat-num" style="color:var(--amber)">75%</div>
+            <div class="stat-lbl">Média Ocupação Diária</div>
+            <div class="stat-pct">Média · Últimos 30 Dias</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red" style="font-size:20px;">🚗</div>
+          <div>
+            <div class="stat-num red">2h 15m</div>
+            <div class="stat-lbl">Média Permanência</div>
+            <div class="stat-pct">Permanência Média (Horas)</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon amber">🅿</div>
+          <div>
+            <div class="stat-num" style="color:var(--amber)">Sáb, 18/05</div>
+            <div class="stat-lbl">Dia de Maior Movimento</div>
+            <div class="stat-pct" id="r-gen-date">18/05/2024</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon gray">⏱</div>
+          <div>
+            <div class="stat-num" style="color:var(--text);font-size:18px;">Gerado</div>
+            <div class="stat-lbl">Última Geração</div>
+            <div class="stat-pct" id="r-gen-ts">Gerado em: --</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+        <div class="card-header">
+          <span class="card-title">Painel de Relatórios Detalhados</span>
+          <button class="r-btn" id="btn-gerar">⬇ Gerar Relatório</button>
+        </div>
+
+        <div class="report-tabs" style="padding:0 16px;">
+          <div class="rtab active" data-rtab="diario">[Diário]</div>
+          <div class="rtab" data-rtab="semanal">[Semanal]</div>
+          <div class="rtab" data-rtab="mensal">[Mensal]</div>
+          <div class="rtab" data-rtab="anual">[Anual]</div>
+        </div>
+
+        <div class="card-header" style="border-top:1px solid var(--border);gap:10px;">
+          <div class="report-filters">
+            <div style="display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:11px;color:var(--muted);">
+              🔍 <input class="r-search" style="background:transparent;border:none;padding:0;width:150px;" placeholder="Buscar..."/>
+            </div>
+            <div class="r-date"><span>📅</span> <span id="date-range-lbl">Data: 30 dias</span></div>
+            <select class="r-select" id="r-filter-tipo">
+              <option value="ocupacao">Ocupação</option>
+              <option value="permanencia">Permanência</option>
+              <option value="receita">Receita</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="report-grid-2" style="padding:16px;gap:16px;">
+          <div class="report-card">
+            <div class="rcard-header">
+              <span class="rcard-title">Ocupação Mensal e Horários de Pico</span>
+              <select class="r-select" style="font-size:10px;padding:4px 8px;">
+                <option>Últimos 30 dias</option>
+                <option>Últimos 7 dias</option>
+              </select>
+            </div>
+            <div class="r-chart-wrap"><canvas id="r-chart-line" role="img" aria-label="Ocupação mensal por horário">Gráfico de ocupação mensal.</canvas></div>
+            <div style="padding:6px 16px 4px;font-size:10px;color:var(--muted);display:flex;gap:14px;">
+              <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:2px;background:var(--green);display:inline-block;"></span>Ocupação</span>
+              <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:2px;background:var(--red);display:inline-block;"></span>Ocupadas</span>
+              <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:2px;background:#555;display:inline-block;"></span>Indisponível</span>
+            </div>
+          </div>
+          <div class="report-card">
+            <div class="rcard-header">
+              <span class="rcard-title">Média Permanência por Dia da Semana</span>
+            </div>
+            <div class="r-chart-wrap"><canvas id="r-chart-bar" role="img" aria-label="Média de permanência por dia da semana">Permanência por dia.</canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="report-grid-3">
+        <div class="report-card">
+          <div class="rcard-header">
+            <span class="rcard-title">Tabela de Logs e Eventos</span>
+            <div style="display:flex;gap:6px;">
+              <div style="background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:4px 8px;font-size:10px;color:var(--muted);cursor:pointer;">▼ Filtrar</div>
+            </div>
+          </div>
+          <table class="logs-table">
+            <thead>
+              <tr>
+                <th>Data/Hora ↕</th>
+                <th>Placa</th>
+                <th>Vaga</th>
+                <th>Ação</th>
+                <th>Duração</th>
+              </tr>
+            </thead>
+            <tbody id="logs-tbody"></tbody>
+          </table>
+          <div class="pagination">
+            <div class="pg-btn">⟨⟨</div>
+            <div class="pg-btn">⟨</div>
+            <div class="pg-btn active">1</div>
+            <div class="pg-btn">2</div>
+            <div class="pg-btn">⟩</div>
+            <div class="pg-btn">⟩⟩</div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="report-card">
+            <div class="rcard-header">
+              <span class="rcard-title">Volume de Tráfego: Entrada vs. Saída</span>
+              <select class="r-select" style="font-size:10px;padding:3px 7px;">
+                <option>Última semana</option>
+              </select>
+            </div>
+            <div class="r-chart-wrap-sm"><canvas id="r-chart-traffic" role="img" aria-label="Volume de tráfego entrada vs saída">Tráfego entrada/saída.</canvas></div>
+          </div>
+
+          <div class="report-card">
+            <div class="rcard-header">
+              <span class="rcard-title">Distribuição por Tipo</span>
+              <span class="rcard-sub">(Curta / Longa Duração)</span>
+            </div>
+            <div class="donut-wrap">
+              <div style="position:relative;width:120px;height:120px;flex-shrink:0;">
+                <canvas id="r-chart-tipo" width="120" height="120" role="img" aria-label="Distribuição por tipo de veículo">Distribuição tipo.</canvas>
+                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
+                  <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text);">21</div>
+                  <div style="font-size:9px;color:var(--muted);">Total</div>
+                </div>
+              </div>
+              <div class="donut-legend-v">
+                <div class="dl-item"><div class="dl-dot" style="background:var(--green);"></div><span style="font-size:11px;color:var(--muted);">Curta Duração (12)</span></div>
+                <div class="dl-item"><div class="dl-dot" style="background:var(--red);"></div><span style="font-size:11px;color:var(--muted);">Longa Duração (8)</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-relatorios -->
+
+  </main>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
