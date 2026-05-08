@@ -36,11 +36,11 @@ def modo_mapear():
     print("   S: salvar e iniciar deteccao")
     print("   ESC: sair sem salvar\n")
 
-    cap = cv2.VideoCapture(0, cv2.CAP_MSMF)
+    cap = cv2.VideoCapture(2, cv2.CAP_MSMF)
     if not cap.isOpened():
-        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        cap = cv2.VideoCapture(2, cv2.CAP_DSHOW)
     if not cap.isOpened():
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(2)
     if not cap.isOpened():
         print("ERRO: nao foi possivel abrir a camera.")
         return []
@@ -154,11 +154,11 @@ def modo_detectar(vagas: list):
     print("   • ESC: encerrar\n")
 
     model = YOLO("yolov8m.pt")
-    cap   = cv2.VideoCapture(0, cv2.CAP_MSMF)
+    cap   = cv2.VideoCapture(2, cv2.CAP_MSMF)
     if not cap.isOpened():
-        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        cap = cv2.VideoCapture(2, cv2.CAP_DSHOW)
     if not cap.isOpened():
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(2)
     if not cap.isOpened():
         print("❌ Erro: não foi possível abrir a câmera no modo de detecção.")
         return

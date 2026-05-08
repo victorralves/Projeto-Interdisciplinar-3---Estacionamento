@@ -206,7 +206,10 @@ function atualizarRelogio() {
   const s = String(agora.getSeconds()).padStart(2, '0');
   document.getElementById('clock').textContent = h + ':' + m + ':' + s;
   document.getElementById('last-update').textContent = agora.toLocaleDateString('pt-BR') + ' ' + h + ':' + m;
-  document.getElementById('map-updated').textContent = 'Atualizado: ' + h + ':' + m + ':' + s;
+  const mapUpdated = document.getElementById('map-updated');
+  if (mapUpdated) {
+    mapUpdated.textContent = 'Atualizado: ' + h + ':' + m + ':' + s;
+  }
 }
 
 function exibirTooltip(evento, vaga) {
@@ -393,15 +396,18 @@ setInterval(atualizarRelogio, 1000);
 
 // Loop serial para evitar overlapping de requests e refresh visual excessivo
 async function loopUpdate() {
-  await buscarVagasAPI();
-  
-  // Se estiver na pagina de relatorios, atualiza logs tambem
+  const paginaDashboard = document.getElementById('page-dashboard');
   const paginaRelatorios = document.getElementById('page-relatorios');
+
+  if (paginaDashboard && paginaDashboard.classList.contains('active')) {
+    await buscarVagasAPI();
+  }
+
   if (paginaRelatorios && paginaRelatorios.classList.contains('active')) {
     await carregarSessoes();
     await carregarSnapshots();
   }
-  
+
   setTimeout(loopUpdate, 2000); // 2 segundos apos o fim da request anterior
 }
 
